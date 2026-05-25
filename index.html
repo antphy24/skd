@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnglishScore C1 Training Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- SCREEN 1: MAIN MENU -->
+        <div id="menu-screen" class="view">
+            <header>
+                <h1>EnglishScore Training</h1>
+                <p class="subtitle">B2 → C1 Advanced Modules</p>
+            </header>
+            <main>
+                <h3>Select a Quiz Module:</h3>
+                <div id="menu-categories" class="menu-grid"></div>
+            </main>
+        </div>
+
+        <!-- SCREEN 2: ACTIVE QUIZ -->
+        <div id="quiz-screen" class="view hidden">
+            <header class="quiz-header">
+                <button id="quit-btn" class="text-btn">✕ Quit</button>
+                <div class="stats-bar">
+                    <span id="score">Score: 0</span>
+                    <span id="timer" class="timer-badge">60s</span>
+                </div>
+                <div class="progress-container">
+                    <div id="progressBar" class="progress-fill"></div>
+                </div>
+                <p id="progressText">Question 1 / 20</p>
+            </header>
+
+            <main class="card">
+                <h2 id="question">Loading...</h2>
+                <div id="options" class="options-grid"></div>
+                
+                <div id="feedback" class="feedback-area hidden">
+                    <p id="feedback-text"></p>
+                    <p id="explanation" class="explanation-text"></p>
+                </div>
+            </main>
+
+            <footer>
+                <button id="nextBtn" class="primary-btn" disabled>Next Question</button>
+            </footer>
+        </div>
+
+        <!-- SCREEN 3: RESULTS & REVIEWS -->
+        <div id="results-screen" class="view hidden">
+            <main class="card summary-card">
+                <h1>Performance Summary</h1>
+                <div class="score-circle">
+                    <span id="final-score">0/20</span>
+                </div>
+                <h2 id="quiz-title-summary">Module Completed</h2>
+                
+                <div class="action-buttons">
+                    <button id="review-toggle-btn" class="secondary-btn">Review All Answers</button>
+                    <button class="primary-btn" onclick="showMenu()">Main Menu</button>
+                </div>
+
+                <div id="review-section" class="review-list hidden">
+                    <h3>Detailed Question Breakdown</h3>
+                    <div id="review-container"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- DATA MODULES (Add files here as you scale up) -->
+    <script src="data_collocations.js"></script>
+    <script src="data_inversions.js"></script>
+    <script src="data_grammar.js"></script>
+
+    <!-- CORE LOGIC ENGINE -->
+    <script src="script.js"></script>
+</body>
+</html>
