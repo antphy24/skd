@@ -1,6 +1,8 @@
 window.quizData = window.quizData || {};
 window.quizData.twk = {
     title: "Tes Wawasan Kebangsaan",
+    limit: 30,
+    timeLimit: 30,
     questions: [
         { 
             q: "Seorang pejabat publik diketahui memiliki gaya hidup mewah yang tidak sesuai dengan profil pendapatannya. Meskipun belum terbukti melakukan korupsi, pejabat tersebut mendapat sanksi sosial dan teguran etika. Hal ini menunjukkan pentingnya integritas dalam aspek...", 
