@@ -1,6 +1,8 @@
 window.quizData = window.quizData || {};
 window.quizData.tkp = {
 title: "Tes Karakteristik Pribadi",
+  limit: 45,
+  timeLimit: 45,
 questions: [
 {
 q: "Instansi Anda baru saja meluncurkan aplikasi pelayanan publik berbasis AI, namun sistem sering mengalami crash pada jam sibuk karena lonjakan pengguna. Sebagai penanggung jawab bidang digitalisasi, sikap Anda adalah...",
