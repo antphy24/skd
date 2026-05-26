@@ -1,6 +1,8 @@
 window.quizData = window.quizData || {};
 window.quizData.tiu = {
     title: "Tes Intelegensi Umum",
+	limit: 35,
+	timeLimit: 35,
     questions: [
         { 
             q: "Analogi:\nKAKI : SEPATU = ... : ...", 
@@ -365,7 +367,7 @@ window.quizData.tiu = {
                 "Utara"
             ], 
             answer: "Timur", 
-            explanation: "Mari kita petakan posisi duduk melingkar (berlawanan jarum jam jika dilihat dari atas):\n1. Ayah: Utara\n2. Ibu (di depan Ayah): Selatan\n3. Kakak (di kanan Ayah, artinya sisi Timur): Timur\n4. Adik: Tersisa posisi Barat.\n\n*Koreksi berdasarkan pilihan jawaban yang paling logis untuk melengkapi kursi yang kosong jika diurutkan:* Jika Ayah di Utara dan Ibu di Selatan, maka Kakak di Timur. Maka Adik menempati posisi yang tersisa yaitu Barat. (Catatan: Jika soal ini merupakan bagian dari aplikasi, periksa kembali orientasi 'kanan' Anda; jika Kakak di Timur, maka Adik di Barat. Namun, jika ada pilihan 'Barat' tidak tersedia atau kunci jawaban mengarah lain, silakan sesuaikan)." 
+            explanation: "Mari kita petakan posisi duduk melingkar (berlawanan jarum jam jika dilihat dari atas):\n1. Ayah: Utara\n2. Ibu (di depan Ayah): Selatan\n3. Kakak (di kanan Ayah, artinya sisi Barat): Barat\n4. Adik: Tersisa posisi Timur.\n\n" 
         },
         { 
             q: "Ada 5 kotak. Kotak 1 berisi 2 kelereng. Kotak 2 berisi 4 kelereng. Kotak 3 berisi 8. Setiap kotak berisi 2 kali lipat kotak sebelumnya. Berapa isi kotak ke-5?", 
