@@ -23,6 +23,7 @@ let quizMode = "test";
 let userSelections = [];
 let answeredQuestions = [];
 let flaggedQuestions = [];
+let currentPopupCallback = null;
 
 // ================================================
 // UTILITIES
@@ -101,10 +102,12 @@ function showSubmitModal() {
     document.getElementById("submit-modal").classList.remove("hidden");
 }
 
-// Full Question Navigator
-function showQuestionNavigator() {
-    const container = document.getElementById('full-question-grid');
-    if (!container) return;
+// Slide-in Grid Navigator
+function showQuestionPanel() {
+    const panel = document.getElementById('question-nav-panel');
+    const container = document.getElementById('slide-question-grid');
+
+    if (!panel || !container) return;
 
     container.innerHTML = "";
 
@@ -113,24 +116,26 @@ function showQuestionNavigator() {
         item.className = 'question-item';
         item.textContent = i + 1;
 
+        // Always show the box
         if (answeredQuestions[i]) item.classList.add('answered');
         if (flaggedQuestions.includes(i)) item.classList.add('flagged');
         if (i === current) item.classList.add('current');
 
         item.onclick = () => {
             current = i;
-            closeQuestionNav();
+            closeQuestionPanel();
             loadQuestion();
         };
 
         container.appendChild(item);
     }
 
-    document.getElementById('question-nav-modal').classList.remove('hidden');
+    panel.classList.add('open');
 }
 
-function closeQuestionNav() {
-    document.getElementById('question-nav-modal').classList.add('hidden');
+function closeQuestionPanel() {
+    const panel = document.getElementById('question-nav-panel');
+    if (panel) panel.classList.remove('open');
 }
 
 // Dark Mode Handler
@@ -160,6 +165,83 @@ function initDarkMode() {
         toggleBtn.textContent = isDark ? '☀️' : '🌙';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
+}
+
+function handleDoubtClick() {
+    if (quizMode !== "test") return;
+
+    toggleFlag();           // Reuse your existing flag function
+    loadQuestion();         // Refresh UI
+}
+
+// Update bottom navigation buttons state
+function updateBottomNavigation() {
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const doubtBtn = document.getElementById("doubtBtn");
+
+    if (prevBtn) {
+        prevBtn.disabled = (current === 0);
+    }
+
+    if (nextBtn) {
+        nextBtn.innerText = (current === currentQuizList.length - 1)
+            ? (quizMode === "test" ? "Submit Ujian" : "Selesai")
+            : "Lanjut →";
+    }
+
+    if (doubtBtn) {
+        doubtBtn.style.opacity = flaggedQuestions.includes(current) ? "1" : "0.85";
+    }
+}
+
+// Custom Popup System
+
+function showCustomPopup(title, message, buttons) {
+    const popup = document.getElementById('custom-popup');
+    const titleEl = document.getElementById('popup-title');
+    const messageEl = document.getElementById('popup-message');
+    const btnContainer = document.getElementById('popup-buttons');
+
+    if (!popup || !titleEl || !messageEl || !btnContainer) return;
+
+    titleEl.innerText = title;
+    messageEl.innerText = message;
+    btnContainer.innerHTML = "";
+
+    buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.className = `popup-btn ${btn.type || 'secondary'}`;
+        button.innerText = btn.text;
+
+        button.onclick = () => {
+            closeCustomPopup();
+            if (btn.callback) btn.callback();
+        };
+
+        btnContainer.appendChild(button);
+    });
+
+    popup.classList.remove('hidden');
+}
+
+function closeCustomPopup() {
+    const popup = document.getElementById('custom-popup');
+    if (popup) popup.classList.add('hidden');
+}
+
+// Helper functions to replace alert and confirm
+function showConfirm(message, onConfirm, onCancel = null) {
+    showCustomPopup("Konfirmasi", message, [
+        { text: "Batal", type: "secondary", callback: onCancel || (() => { }) },
+        { text: "Ya", type: "primary", callback: onConfirm }
+    ]);
+}
+
+function showAlert(message, onClose = null) {
+    showCustomPopup("Info", message, [
+        { text: "OK", type: "primary", callback: onClose || (() => { }) }
+    ]);
 }
 
 // ================================================
@@ -219,28 +301,35 @@ function updateAuthUI(isLoggedIn) {
     if (!displaySpan || !actionsDiv) return;
 
     if (isLoggedIn && currentUser) {
-        const tier = currentUserProfile?.is_premium ? "Premium" : "Free Tier";
-        displaySpan.innerText = `${currentUser.email} (${tier})`;
-        actionsDiv.innerHTML = `<button class="secondary-btn sm" onclick="handleLogout()">Logout</button>`;
+        const tier = currentUserProfile?.is_premium ? "Premium" : "Free";
+        displaySpan.innerText = `${currentUser.email.split('@')[0]} (${tier})`;
+        actionsDiv.innerHTML = `<button class="secondary-btn sm" onclick="handleLogout()" style="padding: 6px 12px; font-size: 0.9rem;">Logout</button>`;
     } else {
-        displaySpan.innerText = "Guest / Free Mode";
+        displaySpan.innerText = "Guest Mode";
         actionsDiv.innerHTML = `
-            <button class="primary-btn sm" onclick="triggerAuthModal('login')">Log In</button>
-            <button class="secondary-btn sm" onclick="triggerAuthModal('signup')">Sign Up</button>
+            <button class="primary-btn sm" onclick="triggerAuthModal('login')" style="padding: 6px 12px; font-size: 0.9rem;">Login</button>
         `;
     }
 }
 
 function triggerAuthModal(mode) {
     authMode = mode;
-    document.getElementById("auth-modal-title").innerText = mode === "login" ? "Sign In" : "Create Account";
-    document.getElementById("auth-primary-btn").innerText = mode === "login" ? "Sign In" : "Register";
+    document.getElementById("auth-modal-title").innerText = mode === "login" ? "Masuk" : "Daftar Akun";
+    document.getElementById("auth-primary-btn").innerText = mode === "login" ? "Masuk" : "Daftar";
     document.getElementById("auth-switch-btn").innerText = mode === "login" ?
-        "Don't have an account? Sign Up" : "Already have an account? Log In";
+        "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
 
     const modal = document.getElementById("auth-modal");
+    if (!modal) return;
     modal.classList.remove("hidden");
     modal.style.display = "flex";
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById("auth-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.style.display = "none";
 }
 
 async function handleLogout() {
@@ -271,13 +360,16 @@ function showMenu() {
     modules.forEach(m => {
         const stats = getStats(m.key);
         const card = document.createElement("div");
-        card.className = "menu-card";
+        card.className = `menu-card menu-card--${m.key}`;
 
         let attemptsHTML = stats.attempts.slice(0, 2)
             .map(a => `<li>${a.score} (${a.date})</li>`).join('');
         if (!attemptsHTML) attemptsHTML = "<li>No attempts yet</li>";
 
         card.innerHTML = `
+            <div class="menu-card-top">
+                <span class="menu-module-pill">${m.key.toUpperCase()}</span>
+            </div>
             <h4>${m.title}</h4>
             <div class="highscore-badge">High Score: ${stats.highscore}</div>
             <div class="history-box">
@@ -303,7 +395,7 @@ async function confirmMode(modeSelection) {
     quizMode = modeSelection;
     switchView('quiz-screen');
 
-    document.getElementById("question").innerHTML = "Memuat soal dari Supabase...";
+    document.getElementById("question").innerHTML = "Memuat soal...";
     document.getElementById("options").innerHTML = "";
 
     try {
@@ -327,7 +419,7 @@ async function confirmMode(modeSelection) {
         currentUserProfile = { is_premium: isPremium };
 
         if (rawQuestions.length === 0) {
-            document.getElementById("question").innerHTML = "Tidak ada soal tersedia untuk akun Anda.";
+            document.getElementById("question").innerHTML = "Tidak ada soal tersedia.";
             return;
         }
 
@@ -349,11 +441,25 @@ async function confirmMode(modeSelection) {
             document.getElementById("timer").innerText = "Practice Mode";
         }
 
+        // Set module title and theme metadata
+        const titleEl = document.getElementById("quiz-module-title");
+        const quizScreen = document.getElementById("quiz-screen");
+        const modeBadge = document.getElementById("quiz-mode-badge");
+
+        if (titleEl) titleEl.innerText = currentQuizKey.toUpperCase();
+        if (quizScreen) {
+            quizScreen.dataset.module = currentQuizKey;
+            quizScreen.dataset.mode = quizMode;
+        }
+        if (modeBadge) {
+            modeBadge.innerText = quizMode === "test" ? "Timed Test" : "Practice Mode";
+        }
+
         loadQuestion();
 
     } catch (err) {
-        console.error("Quiz loading error:", err);
-        document.getElementById("question").innerHTML = "Gagal memuat soal. Periksa koneksi internet.";
+        console.error("Quiz load error:", err);
+        document.getElementById("question").innerHTML = "Gagal memuat soal.<br><small>Periksa koneksi atau coba lagi nanti.</small>";
     }
 }
 
@@ -373,7 +479,7 @@ function runModuleClock() {
         if (timeLeft <= 120) document.getElementById("timer").classList.add("danger");
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            alert("Waktu habis! Ujian diserahkan otomatis.");
+            showAlert("Waktu habis! Ujian diserahkan otomatis.");
             processFinalSubmission();
         }
     }, 1000);
@@ -409,28 +515,31 @@ function loadQuestion() {
     if (!qData) return;
 
     const optionsDiv = document.getElementById("options");
-    const nextBtn = document.getElementById("nextBtn");
-    const prevBtn = document.getElementById("prevBtn");
 
-    prevBtn.disabled = current === 0;
-    nextBtn.innerText = (current === currentQuizList.length - 1)
-        ? (quizMode === "test" ? "Submit Exam" : "Finish Review")
-        : "Next Question";
+    // Update progress
+    document.getElementById("progressText").innerText = `Soal ${current + 1} / ${currentQuizList.length}`;
+    document.getElementById("progressBar").style.width = `${((current + 1) / currentQuizList.length) * 100}%`;
+    const questionIndexChip = document.getElementById("question-index-chip");
+    if (questionIndexChip) questionIndexChip.innerText = `${current + 1} / ${currentQuizList.length}`;
+    //document.getElementById("score").innerText = quizMode === "learning" ? `Score: ${score}` : "Score: hidden";
 
-    nextBtn.disabled = (quizMode === "learning" && !answeredQuestions[current]);
-
+    // Render question
     document.getElementById("question").innerHTML = qData.question_text.replace(/\n/g, "<br>");
     if (qData.is_hots) {
         document.getElementById("question").innerHTML = `<span class="badge hots-badge">HOTS</span><br>` +
             document.getElementById("question").innerHTML;
     }
 
-    document.getElementById("progressText").innerText = `Question ${current + 1} / ${currentQuizList.length}`;
-    document.getElementById("progressBar").style.width = `${((current + 1) / currentQuizList.length) * 100}%`;
-    document.getElementById("score").innerText = quizMode === "learning" ? `Score: ${score}` : "Score: hidden";
+    // Reset feedback
+    const feedbackArea = document.getElementById("feedback");
+    if (feedbackArea) {
+        feedbackArea.classList.add("hidden");
+        feedbackArea.classList.remove("success", "error", "info");
+        feedbackArea.removeAttribute("data-status");
+    }
 
+    // Render options
     optionsDiv.innerHTML = "";
-
     qData._fixedShuffledOptions.forEach(optObj => {
         const btn = document.createElement("button");
         btn.className = "option-btn";
@@ -450,13 +559,18 @@ function loadQuestion() {
         optionsDiv.appendChild(btn);
     });
 
+    // Show feedback in Learning Mode
     if (quizMode === "learning" && answeredQuestions[current]) {
         showLearningFeedback(qData);
     }
 
+    // Render math
     renderMath(document.getElementById("question"));
     document.querySelectorAll(".option-btn").forEach(btn => renderMath(btn));
+
+    // Update UI States
     updateFlagUI();
+    updateBottomNavigation();
 }
 
 function selectOption(selectedOptObj, clickedBtn) {
@@ -467,34 +581,42 @@ function selectOption(selectedOptObj, clickedBtn) {
     if (quizMode === "test") {
         userSelections[current] = selectedOptObj.text;
         clickedBtn.classList.add("selected");
+        answeredQuestions[current] = true;
 
         localStorage.setItem(`crash_recovery_${currentQuizKey}`, JSON.stringify({
             current,
             selections: userSelections,
             timeLeft: Math.floor((timerEndTime - Date.now()) / 1000)
         }));
+
     } else {
+        // LEARNING MODE
         if (answeredQuestions[current]) return;
 
         userSelections[current] = selectedOptObj.text;
         answeredQuestions[current] = true;
 
+        // Highlight correct and selected
         allBtns.forEach(b => {
             b.disabled = true;
             const matching = qData.options.find(o => o.text === b.innerHTML);
-            if (matching?.points === 5) b.classList.add("correct");
+            if (matching && matching.points === 5) {
+                b.classList.add("correct");
+            }
+            if (b.innerHTML === selectedOptObj.text) {
+                b.classList.add("selected");
+            }
         });
 
         score += selectedOptObj.points || 0;
-        document.getElementById("score").innerText = `Score: ${score}`;
+        const scoreEl = document.getElementById("score");
+        if (scoreEl) scoreEl.innerText = `Score: ${score}`;
 
-        if (selectedOptObj.points < 5 && currentQuizKey !== "tkp") {
-            clickedBtn.classList.add("incorrect");
-        }
-
+        // Show feedback
         showLearningFeedback(qData);
-        document.getElementById("nextBtn").disabled = false;
     }
+
+    updateFlagUI();
 }
 
 // ================================================
@@ -503,19 +625,30 @@ function selectOption(selectedOptObj, clickedBtn) {
 function showLearningFeedback(qData) {
     const feedbackArea = document.getElementById("feedback");
     const feedbackText = document.getElementById("feedback-text");
-    if (!feedbackArea || !feedbackText) return;
+    const explanationEl = document.getElementById("explanation");
+
+    if (!feedbackArea || !feedbackText || !explanationEl) return;
 
     const selectedText = userSelections[current];
     const chosenOption = qData.options.find(o => o.text === selectedText);
     const pointsEarned = chosenOption ? chosenOption.points : 0;
 
     if (currentQuizKey === "tkp") {
-        feedbackText.innerHTML = `<strong>Poin Nilai: ${pointsEarned}</strong>`;
+        feedbackText.innerHTML = `<strong>Poin: ${pointsEarned}</strong>`;
+        feedbackArea.classList.add("info");
+        feedbackArea.dataset.status = "info";
+    } else if (pointsEarned === 5) {
+        feedbackText.innerHTML = "<strong>✅ Benar!</strong>";
+        feedbackArea.classList.add("success");
+        feedbackArea.dataset.status = "success";
     } else {
-        feedbackText.innerHTML = pointsEarned === 5 ? "<strong>Benar!</strong>" : "<strong>Salah</strong>";
+        feedbackText.innerHTML = "<strong>❌ Salah</strong>";
+        feedbackArea.classList.add("error");
+        feedbackArea.dataset.status = "error";
     }
 
-    document.getElementById("explanation").innerHTML = qData.explanation.replace(/\n/g, "<br>");
+    explanationEl.innerHTML = (qData.explanation || "Tidak ada penjelasan tersedia.").replace(/\n/g, "<br>");
+
     feedbackArea.classList.remove("hidden");
     renderMath(feedbackArea);
 }
@@ -610,14 +743,15 @@ function closeSubmitModal() {
 // BOOTSTRAP
 // ================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Navigation buttons
-    document.getElementById("nextBtn").onclick = handleNextBtnClick;
+    // Bottom Navigation Bindings
     document.getElementById("prevBtn").onclick = handlePrevBtnClick;
+    document.getElementById("nextBtn").onclick = handleNextBtnClick;
+    document.getElementById("doubtBtn").onclick = handleDoubtClick;
 
     const quitBtn = document.getElementById("quit-btn");
     if (quitBtn) {
         quitBtn.onclick = () => {
-            if (confirm("Keluar dari ujian ini?")) showMenu();
+            showConfirm("Keluar dari ujian ini?", () => showMenu());
         };
     }
 
@@ -634,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const navBtn = document.getElementById('nav-btn');
-    if (navBtn) navBtn.onclick = showQuestionNavigator;
+    if (navBtn) navBtn.onclick = showQuestionPanel;
 
     // Auth modal handler
     const authActionBtn = document.getElementById("auth-primary-btn");
@@ -644,28 +778,52 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById("auth-password").value.trim();
 
             if (!email || !password) {
-                alert("Email dan password harus diisi.");
+                showAlert("Email dan password harus diisi.");
                 return;
             }
 
             if (authMode === "signup") {
                 const { error } = await _supabase.auth.signUp({ email, password });
-                if (error) alert(`Gagal mendaftar: ${error.message}`);
+                if (error) showAlert(`Gagal mendaftar: ${error.message}`);
                 else {
-                    alert("Pendaftaran berhasil!");
-                    document.getElementById("auth-modal").classList.add("hidden");
+                    showAlert("Pendaftaran berhasil!");
+                    closeAuthModal();
                     await initializeAuthSession();
                 }
             } else {
                 const { error } = await _supabase.auth.signInWithPassword({ email, password });
-                if (error) alert(`Gagal masuk: ${error.message}`);
+                if (error) showAlert(`Gagal masuk: ${error.message}`);
                 else {
-                    document.getElementById("auth-modal").classList.add("hidden");
+                    closeAuthModal();
                     await initializeAuthSession();
                 }
             }
         };
     }
+
+    const authSwitchBtn = document.getElementById("auth-switch-btn");
+    if (authSwitchBtn) {
+        authSwitchBtn.onclick = () => {
+            authMode = authMode === "login" ? "signup" : "login";
+            triggerAuthModal(authMode);
+        };
+    }
+
+    const authCloseBtn = document.getElementById("auth-close-btn");
+    if (authCloseBtn) {
+        authCloseBtn.onclick = closeAuthModal;
+    }
+
+    const authModal = document.getElementById("auth-modal");
+    if (authModal) {
+        authModal.addEventListener("click", (event) => {
+            if (event.target === authModal) closeAuthModal();
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeAuthModal();
+    });
 
     initializeAuthSession();
     initDarkMode();
