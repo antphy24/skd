@@ -124,14 +124,13 @@
         <!-- QUIZ SCREEN -->
         <div id="quiz-screen" class="view hidden">
             <div class="quiz-shell">
-                <section class="quiz-top-panel">
+                <section class="quiz-top-panel compact">
                     <div class="quiz-top-copy">
-                        <p class="quiz-kicker">Assessment Session</p>
                         <h2 id="quiz-module-title" class="quiz-module-title"></h2>
+                        <span id="quiz-mode-badge" class="quiz-mode-badge">Practice Mode</span>
                     </div>
 
                     <div class="quiz-top-actions">
-                        <span id="quiz-mode-badge" class="quiz-mode-badge">Practice Mode</span>
                         <button id="nav-btn" class="quiz-icon-btn" aria-label="Navigasi Soal">
                             📋
                         </button>
@@ -141,16 +140,11 @@
                     </div>
                 </section>
 
-                <section class="quiz-progress-panel">
+                <section class="quiz-progress-panel slim">
                     <div class="quiz-progress-copy">
-                        <p class="quiz-progress-label">Progress</p>
                         <p id="progressText" class="quiz-progress-text">Soal 1 / 20</p>
+                        <span id="timer" class="timer-badge" aria-live="polite"></span>
                     </div>
-
-                    <div class="quiz-progress-meta">
-                        <span id="timer" class="timer-badge" aria-live="polite">Practice Mode</span>
-                    </div>
-
                     <div class="progress-container" aria-hidden="true">
                         <div id="progressBar" class="progress-fill"></div>
                     </div>
@@ -158,11 +152,6 @@
 
                 <main class="quiz-content-scroll">
                     <section class="card quiz-main">
-                        <div class="question-meta-row">
-                            <span class="question-meta-chip">Question</span>
-                            <span id="question-index-chip" class="question-meta-chip subtle">1 / 20</span>
-                        </div>
-
                         <h2 id="question" class="question-text"></h2>
 
                         <div class="options-heading">Jawaban yang tersedia</div>
@@ -196,46 +185,100 @@
         </div>
 
         <!-- SUBMIT CONFIRMATION -->
-        <div id="submit-modal" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content card text-center">
-                <h2>Submit Ujian?</h2>
-                <p>Anda tidak dapat mengubah jawaban setelah disubmit.</p>
-
-                <!-- New Flagged Summary -->
-                <div id="flagged-summary" class="flagged-summary hidden">
-                    <p><strong>⚑ <span id="flagged-count-modal">0</span> soal ditandai untuk review</strong></p>
-                    <small>Anda masih bisa review soal ini sebelum submit.</small>
+        <div id="submit-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title"
+            aria-describedby="submit-modal-copy">
+            <div class="modal-content card submit-confirmation-panel">
+                <div class="submit-modal-header">
+                    <div class="submit-modal-icon">⚠️</div>
+                    <div>
+                        <p class="submit-modal-eyebrow">Konfirmasi Pengiriman</p>
+                        <h3 id="submit-modal-title">Submit Ujian</h3>
+                    </div>
                 </div>
 
-                <button class="primary-btn" onclick="processFinalSubmission()">✅ Ya, Submit Sekarang</button>
-                <button class="secondary-btn" onclick="closeSubmitModal()">Kembali & Review</button>
+                <p id="submit-modal-copy" class="submit-modal-copy">Pastikan semua jawaban sudah diperiksa. Setelah
+                    submit, perubahan tidak dapat dilakukan.</p>
+
+                <div class="submit-summary-grid">
+                    <div class="summary-card">
+                        <span class="summary-label">Total Soal</span>
+                        <strong id="submit-total-count">0</strong>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Belum dijawab</span>
+                        <strong id="submit-unanswered-count">0</strong>
+                    </div>
+                    <div class="summary-card flagged-card">
+                        <span class="summary-label">Ditandai</span>
+                        <strong id="submit-flagged-count-modal">0</strong>
+                    </div>
+                </div>
+
+                <div id="submit-review-hint" class="submit-review-hint hidden">
+                    <p><strong>Tip:</strong> Gunakan tombol “Kembali & Review” untuk meninjau soal yang Anda tandai.</p>
+                </div>
+
+                <div class="submit-modal-actions">
+                    <button class="secondary-btn" onclick="closeSubmitModal()">Kembali & Review</button>
+                    <button class="primary-btn" onclick="processFinalSubmission()">Submit Ujian</button>
+                </div>
             </div>
         </div>
 
         <!-- SLIDE-IN QUESTION NAVIGATOR (Grid Style) -->
-        <div id="question-nav-panel" class="slide-panel">
-            <div class="slide-panel-header">
-                <h3>Navigasi Soal</h3>
-                <button onclick="closeQuestionPanel()" class="text-btn">✕</button>
-            </div>
+        <div id="question-nav-panel" class="slide-panel" aria-label="Navigasi soal">
+            <div class="slide-panel-shell">
+                <div class="slide-panel-header">
+                    <div>
+                        <p class="slide-panel-title">Navigasi Soal</p>
+                        <p class="slide-panel-subtitle">Klik nomor untuk lompat cepat ke soal.</p>
+                    </div>
+                    <button onclick="closeQuestionPanel()" class="text-btn">✕</button>
+                </div>
 
-            <div class="slide-panel-content">
-                <div id="slide-question-grid" class="question-grid"></div>
+                <div class="slide-panel-stats">
+                    <span id="panel-answered-count" class="nav-chip">Terjawab 0</span>
+                    <span id="panel-flagged-count" class="nav-chip flagged">Ragu-Ragu 0</span>
+                    <span id="panel-remaining-count" class="nav-chip">Tersisa 0</span>
+                </div>
+
+                <div class="slide-panel-content">
+                    <div id="slide-question-grid" class="question-grid"></div>
+                </div>
             </div>
         </div>
 
         <!-- RESULTS SCREEN -->
         <div id="results-screen" class="view hidden">
-            <main class="card summary-card">
-                <h1>Ringkasan Hasil</h1>
+            <main class="card results-panel">
+                <section class="results-header">
+                    <div>
+                        <p class="results-eyebrow">Hasil Ujian</p>
+                        <h1 id="quiz-title-summary">Modul Selesai</h1>
+                    </div>
+                    <div class="results-badge">Selesai</div>
+                </section>
 
-                <div class="score-circle" aria-live="polite">
-                    <span id="final-score">0</span>
+                <div class="results-score-block">
+                    <div class="score-circle" aria-live="polite">
+                        <span id="final-score">0</span>
+                    </div>
+                    <p id="results-performance-text" class="results-performance-text">Nilai akhir Anda sudah dihitung
+                        berdasarkan jawaban yang telah diberikan.</p>
                 </div>
 
-                <h2 id="quiz-title-summary">Modul Selesai</h2>
+                <div class="results-metrics">
+                    <div class="metric-card success-card">
+                        <span class="metric-label">Jawaban Benar / Total Soal</span>
+                        <strong id="results-correct-count">0</strong>
+                    </div>
+                    <div class="metric-card warning-card">
+                        <span class="metric-label">Tidak Dijawab</span>
+                        <strong id="results-unanswered-count">0</strong>
+                    </div>
+                </div>
 
-                <div class="action-buttons">
+                <div class="results-actions">
                     <button id="review-toggle-btn" class="secondary-btn">Lihat Pembahasan</button>
                     <button class="primary-btn" onclick="showMenu()">Kembali ke Menu Utama</button>
                 </div>
@@ -248,12 +291,20 @@
         </div>
 
         <!-- CUSTOM POPUP MODAL -->
-        <div id="custom-popup" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content card text-center" style="max-width: 380px;">
-                <h3 id="popup-title">Konfirmasi</h3>
-                <p id="popup-message" style="margin: 16px 0; line-height: 1.5;"></p>
+        <div id="custom-popup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="popup-title"
+            aria-describedby="popup-message">
+            <div class="modal-content card popup-panel">
+                <div class="popup-header">
+                    <div class="popup-icon">🔔</div>
+                    <div>
+                        <p class="popup-eyebrow">Konfirmasi</p>
+                        <h3 id="popup-title">Konfirmasi</h3>
+                    </div>
+                </div>
 
-                <div id="popup-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <p id="popup-message" class="popup-copy"></p>
+
+                <div id="popup-buttons" class="popup-actions">
                     <!-- Buttons will be added dynamically -->
                 </div>
             </div>
