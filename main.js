@@ -79,26 +79,28 @@ function updateFlagUI() {
     flagCount.textContent = flaggedQuestions.length;
 }
 
-// Flagged Questions Summary in Submit Modal
-function updateFlaggedSummaryInModal() {
-    const countEl = document.getElementById('flagged-count-modal');
-    const summaryBox = document.getElementById('flagged-summary');
+// Submit Modal Summary Helpers
+function updateSubmitSummaryInModal() {
+    const totalEl = document.getElementById('submit-total-count');
+    const unansweredEl = document.getElementById('submit-unanswered-count');
+    const flaggedEl = document.getElementById('submit-flagged-count-modal');
+    const reviewHint = document.getElementById('submit-review-hint');
 
-    if (!countEl || !summaryBox) return;
+    if (!totalEl || !unansweredEl || !flaggedEl || !reviewHint) return;
 
-    const count = flaggedQuestions.length;
-    countEl.textContent = count;
+    const total = currentQuizList.length;
+    const unanswered = userSelections.filter(answer => !answer).length;
+    const flagged = flaggedQuestions.length;
 
-    if (count > 0) {
-        summaryBox.classList.remove('hidden');
-    } else {
-        summaryBox.classList.add('hidden');
-    }
+    totalEl.textContent = total;
+    unansweredEl.textContent = unanswered;
+    flaggedEl.textContent = flagged;
+    reviewHint.classList.toggle('hidden', flagged === 0);
 }
 
 // Enhanced Submit Modal Handler
 function showSubmitModal() {
-    updateFlaggedSummaryInModal();
+    updateSubmitSummaryInModal();
     document.getElementById("submit-modal").classList.remove("hidden");
 }
 
@@ -106,8 +108,19 @@ function showSubmitModal() {
 function showQuestionPanel() {
     const panel = document.getElementById('question-nav-panel');
     const container = document.getElementById('slide-question-grid');
+    const answeredCountEl = document.getElementById('panel-answered-count');
+    const flaggedCountEl = document.getElementById('panel-flagged-count');
+    const remainingCountEl = document.getElementById('panel-remaining-count');
 
     if (!panel || !container) return;
+
+    const answeredCount = answeredQuestions.filter(Boolean).length;
+    const flaggedCount = flaggedQuestions.length;
+    const remainingCount = Math.max(0, currentQuizList.length - answeredCount);
+
+    if (answeredCountEl) answeredCountEl.textContent = `Terjawab ${answeredCount}`;
+    if (flaggedCountEl) flaggedCountEl.textContent = `Ragu-Ragu ${flaggedCount}`;
+    if (remainingCountEl) remainingCountEl.textContent = `Tersisa ${remainingCount}`;
 
     container.innerHTML = "";
 
@@ -438,7 +451,8 @@ async function confirmMode(modeSelection) {
         if (quizMode === "test") {
             runModuleClock();
         } else {
-            document.getElementById("timer").innerText = "Practice Mode";
+            const timerEl = document.getElementById("timer");
+            if (timerEl) timerEl.innerText = "";
         }
 
         // Set module title and theme metadata
@@ -710,8 +724,30 @@ function processFinalSubmission() {
     document.getElementById("quiz-title-summary").innerText = `${currentQuizKey.toUpperCase()} Selesai`;
 
     generateReviewDOM();
+    updateResultsSummary();
     document.getElementById("review-section").classList.add("hidden");
     switchView('results-screen');
+}
+
+function updateResultsSummary() {
+    const correctCount = document.getElementById('results-correct-count');
+    const unansweredCount = document.getElementById('results-unanswered-count');
+    const performanceText = document.getElementById('results-performance-text');
+
+    if (!correctCount || !unansweredCount || !performanceText) return;
+
+    const total = currentQuizList.length;
+    const answered = userSelections.filter(answer => answer !== null && answer !== undefined).length;
+    const correctAnswers = userHistory.filter(item => item.status === 'correct').length;
+    const unanswered = total - answered;
+    const flagged = flaggedQuestions.length;
+
+    correctCount.textContent = `${correctAnswers} / ${total}`;
+    unansweredCount.textContent = unanswered;
+
+    const baseMessage = `Anda menyelesaikan ${total} soal dengan ${correctAnswers} jawaban benar.`;
+    const flagMessage = flagged > 0 ? ` ${flagged} soal ditandai untuk review.` : '';
+    performanceText.textContent = `${baseMessage}${flagMessage}`;
 }
 
 function handleNextBtnClick() {
@@ -769,6 +805,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const navBtn = document.getElementById('nav-btn');
     if (navBtn) navBtn.onclick = showQuestionPanel;
+
+    const quizScreen = document.getElementById('quiz-screen');
+    const navPanel = document.getElementById('question-nav-panel');
+    if (quizScreen && navPanel) {
+        quizScreen.addEventListener('click', (event) => {
+            if (!navPanel.classList.contains('open')) return;
+            if (event.target.closest('#nav-btn')) return;
+            closeQuestionPanel();
+        });
+    }
 
     // Auth modal handler
     const authActionBtn = document.getElementById("auth-primary-btn");
